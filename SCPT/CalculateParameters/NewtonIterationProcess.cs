@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using Extreme.Mathematics;
 using Extreme.Mathematics.LinearAlgebra;
 
@@ -42,16 +43,17 @@ namespace CalculateParameters
 
         public void CalculateTransformationParameters()
         {
-            var srcCordMatrix = FormingCoordinateMatrix(_sourceSystemCoordinates);
-            var destCordMatrix = FormingCoordinateMatrix(_destinationSystemCoordinates);
-            
             var aMatrix = FormingAMatrix();
             var yMatrix = FormingYMatrix();
-
-            var vecParams = GetVectorWithTransformParameters(aMatrix, yMatrix);
+            var paramsTransformMatrix = GetMatrixWithTransformParameters(aMatrix, yMatrix);
+            var vMatrix = GetVMatrix(aMatrix, yMatrix, paramsTransformMatrix);
+            var fCoefficient = CalculateFCoefficient(vMatrix);
+            var mCoefficient = CalculateMCoefficient(fCoefficient);
+            var qMatrix = GetQMatrix(aMatrix);
+            var mceMatrix = GetMeanSquareErrorsMatrix(qMatrix, mCoefficient);
         }
 
-        private DenseMatrix<double> FormingCoordinateMatrix(List<SystemCoordinate> list)
+        private Matrix<double> FormingCoordinateMatrix(List<SystemCoordinate> list)
         {
             var vectorMatrix = Matrix.Create<double>(list.Count, 3); // matrix [nx3]
             for (int i = 0; i < list.Count; i++)
@@ -64,7 +66,7 @@ namespace CalculateParameters
             return vectorMatrix;
         }
 
-        private DenseMatrix<double> FormingAMatrix()
+        private Matrix<double> FormingAMatrix()
         {
             var aMatrix = Matrix.Create<double>(_sourceSystemCoordinates.Count * 3, 7);
 
@@ -100,7 +102,7 @@ namespace CalculateParameters
             return aMatrix;
         }
 
-        private DenseMatrix<double> FormingYMatrix()
+        private Matrix<double> FormingYMatrix()
         {
             var yMatrix = Matrix.Create<double>(_sourceSystemCoordinates.Count * 3, 1);
 
@@ -119,7 +121,7 @@ namespace CalculateParameters
             return yMatrix;
         }
 
-        private DenseMatrix<double> GetVectorWithTransformParameters(Matrix<double> aMatrix, Matrix<double> yMatrix)
+        private Matrix<double> GetMatrixWithTransformParameters(Matrix<double> aMatrix, Matrix<double> yMatrix)
         {
             var currPMatrix = Matrix.Create<double>(7, 1);
             var prevPMatrix = Matrix.Create<double>(7, 1);
@@ -150,29 +152,88 @@ namespace CalculateParameters
             return true;
         }
 
+        private Matrix<double> GetVMatrix(Matrix<double> aMatrix, Matrix<double> yMatrix,
+            Matrix<double> vecParamsMatrix)
+        {
+            var vMatrix = Matrix.Create<double>(_sourceSystemCoordinates.Count * 3, 1);
+            var Ap = Matrix.Multiply(aMatrix, vecParamsMatrix);
+            // V = A * P - Y
+            vMatrix = (DenseMatrix<double>) Matrix.Subtract(Ap, yMatrix);
+
+            return vMatrix;
+        }
+
+        private double CalculateFCoefficient(Matrix<double> vMatrix)
+        {
+            return Matrix.Multiply(vMatrix.Transpose(), vMatrix)[0, 0];
+        }
+
+        private double CalculateMCoefficient(double fCoefficient)
+        {
+            return Math.Sqrt(fCoefficient / (_sourceSystemCoordinates.Count * 3 - 7));
+        }
+        
+        private Matrix<double> GetQMatrix(Matrix<double> aMatrix)
+        {
+            return Matrix.Multiply(aMatrix.Transpose(), aMatrix).GetInverse();
+        }
+        
+        private Matrix<double> GetMeanSquareErrorsMatrix(Matrix<double> qMatrix, double mCoefficient)
+        {
+            var qDiagonal = qMatrix.GetDiagonal().ToColumnMatrix().SqrtInPlace();
+            return Matrix.Multiply(qDiagonal, mCoefficient);
+        }
+
         #region InternalMethodsForTesting
 
-        internal DenseMatrix<double> FormingCoordinateMatrixTst(List<SystemCoordinate> list)
+        internal Matrix<double> FormingCoordinateMatrixTst(List<SystemCoordinate> list)
         {
             return FormingCoordinateMatrix(list);
         }
 
-        internal DenseMatrix<double> FormingAMatrixTst()
+        internal Matrix<double> FormingAMatrixTst()
         {
             return FormingAMatrix();
         }
 
-        internal DenseMatrix<double> FormingYMatrixTst()
+        internal Matrix<double> FormingYMatrixTst()
         {
             return FormingYMatrix();
         }
 
-        internal DenseMatrix<double> GetVectorWithTransformParametersTst(DenseMatrix<double> aMatrix,
-            DenseMatrix<double> yMatrix)
+        internal Matrix<double> GetVectorWithTransformParametersTst(Matrix<double> aMatrix,
+            Matrix<double> yMatrix)
         {
-            return GetVectorWithTransformParameters(aMatrix, yMatrix);
+            return GetMatrixWithTransformParameters(aMatrix, yMatrix);
         }
 
+        internal Matrix<double> GetVMatrixTst(Matrix<double> aMatrix, Matrix<double> yMatrix,
+            Matrix<double> vecParamsMatrix)
+        {
+            return GetVMatrix(aMatrix, yMatrix, vecParamsMatrix);
+        }
+
+        internal double CalculateFCoefficientTst(Matrix<double> paramsTransformMatrix)
+        {
+            return CalculateFCoefficient(paramsTransformMatrix);
+        }
+
+
+        internal double CalculateMCoefficientTst(double fCoefficient)
+        {
+            return CalculateMCoefficient(fCoefficient);
+        }
+
+        internal Matrix<double> GetQMatrixTst(Matrix<double> aMatrix)
+        {
+            return GetQMatrix(aMatrix);
+        }
+
+        internal Matrix<double> GetMeanSquareErrorsMatrixTst(Matrix<double> qMatrix, double mCoefficient)
+        {
+            return GetMeanSquareErrorsMatrix(qMatrix, mCoefficient);
+        }
+        
         #endregion
     }
 
