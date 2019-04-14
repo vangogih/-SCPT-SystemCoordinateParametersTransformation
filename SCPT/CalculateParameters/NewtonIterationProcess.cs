@@ -7,19 +7,17 @@ using Extreme.Mathematics.LinearAlgebra;
 
 namespace CalculateParameters
 {
-    public class NewtonIterationProcess : ITransform
+    public class NewtonIterationProcess
     {
         private const int MinListCount = 3;
 
-        private readonly List<SystemCoordinate> _sourceSystemCoordinates;
-        private readonly List<SystemCoordinate> _destinationSystemCoordinates;
+        public List<Coordinates> SourceSystemCoordinates { get; }
+        public List<Coordinates> DestinationSystemCoordinates { get; }
 
-        public double Wx { get; set; }
-        public double Wy { get; set; }
-        public double Wz { get; set; }
-        public double M { get; set; }
+        public Matrix<double> TransformParametersMatrix { get; private set; }
+        public Matrix<double> MeanSquareErrorsMatrix { get; private set; }
 
-        public NewtonIterationProcess(List<SystemCoordinate> source, List<SystemCoordinate> destination)
+        public NewtonIterationProcess(List<Coordinates> source, List<Coordinates> destination)
         {
             if (source == null)
                 throw new NullReferenceException("source list cannot be null");
@@ -32,13 +30,8 @@ namespace CalculateParameters
             if (source.Count != destination.Count)
                 throw new ArgumentException("source list and destination list must be of the same length");
 
-            _sourceSystemCoordinates = source;
-            _destinationSystemCoordinates = destination;
-
-            Wx = 0;
-            Wy = 0;
-            Wz = 0;
-            M = 0;
+            SourceSystemCoordinates = source;
+            DestinationSystemCoordinates = destination;
         }
 
         public void CalculateTransformationParameters()
@@ -51,9 +44,12 @@ namespace CalculateParameters
             var mCoefficient = CalculateMCoefficient(fCoefficient);
             var qMatrix = GetQMatrix(aMatrix);
             var mceMatrix = GetMeanSquareErrorsMatrix(qMatrix, mCoefficient);
+
+            TransformParametersMatrix = paramsTransformMatrix;
+            MeanSquareErrorsMatrix = mceMatrix;
         }
 
-        private Matrix<double> FormingCoordinateMatrix(List<SystemCoordinate> list)
+        private Matrix<double> FormingCoordinateMatrix(List<Coordinates> list)
         {
             var vectorMatrix = Matrix.Create<double>(list.Count, 3); // matrix [nx3]
             for (int i = 0; i < list.Count; i++)
@@ -68,35 +64,35 @@ namespace CalculateParameters
 
         private Matrix<double> FormingAMatrix()
         {
-            var aMatrix = Matrix.Create<double>(_sourceSystemCoordinates.Count * 3, 7);
+            var aMatrix = Matrix.Create<double>(SourceSystemCoordinates.Count * 3, 7);
 
             for (int matrixIndex = 0, listIndex = 0;
-                matrixIndex < _sourceSystemCoordinates.Count * 3 || listIndex < _sourceSystemCoordinates.Count;
+                matrixIndex < SourceSystemCoordinates.Count * 3 || listIndex < SourceSystemCoordinates.Count;
                 matrixIndex += 3, listIndex++)
             {
                 aMatrix[matrixIndex, 0] = 1;
                 aMatrix[matrixIndex, 1] = 0;
                 aMatrix[matrixIndex, 2] = 0;
                 aMatrix[matrixIndex, 3] = 0;
-                aMatrix[matrixIndex, 4] = -_sourceSystemCoordinates[listIndex].Z;
-                aMatrix[matrixIndex, 5] = _sourceSystemCoordinates[listIndex].Y;
-                aMatrix[matrixIndex, 6] = _sourceSystemCoordinates[listIndex].X;
+                aMatrix[matrixIndex, 4] = -SourceSystemCoordinates[listIndex].Z;
+                aMatrix[matrixIndex, 5] = SourceSystemCoordinates[listIndex].Y;
+                aMatrix[matrixIndex, 6] = SourceSystemCoordinates[listIndex].X;
 
                 aMatrix[matrixIndex + 1, 0] = 0;
                 aMatrix[matrixIndex + 1, 1] = 1;
                 aMatrix[matrixIndex + 1, 2] = 0;
-                aMatrix[matrixIndex + 1, 3] = _sourceSystemCoordinates[listIndex].Z;
+                aMatrix[matrixIndex + 1, 3] = SourceSystemCoordinates[listIndex].Z;
                 aMatrix[matrixIndex + 1, 4] = 0;
-                aMatrix[matrixIndex + 1, 5] = -_sourceSystemCoordinates[listIndex].X;
-                aMatrix[matrixIndex + 1, 6] = _sourceSystemCoordinates[listIndex].Y;
+                aMatrix[matrixIndex + 1, 5] = -SourceSystemCoordinates[listIndex].X;
+                aMatrix[matrixIndex + 1, 6] = SourceSystemCoordinates[listIndex].Y;
 
                 aMatrix[matrixIndex + 2, 0] = 0;
                 aMatrix[matrixIndex + 2, 1] = 0;
                 aMatrix[matrixIndex + 2, 2] = 1;
-                aMatrix[matrixIndex + 2, 3] = -_sourceSystemCoordinates[listIndex].Y;
-                aMatrix[matrixIndex + 2, 4] = _sourceSystemCoordinates[listIndex].X;
+                aMatrix[matrixIndex + 2, 3] = -SourceSystemCoordinates[listIndex].Y;
+                aMatrix[matrixIndex + 2, 4] = SourceSystemCoordinates[listIndex].X;
                 aMatrix[matrixIndex + 2, 5] = 0;
-                aMatrix[matrixIndex + 2, 6] = _sourceSystemCoordinates[listIndex].Z;
+                aMatrix[matrixIndex + 2, 6] = SourceSystemCoordinates[listIndex].Z;
             }
 
             return aMatrix;
@@ -104,18 +100,18 @@ namespace CalculateParameters
 
         private Matrix<double> FormingYMatrix()
         {
-            var yMatrix = Matrix.Create<double>(_sourceSystemCoordinates.Count * 3, 1);
+            var yMatrix = Matrix.Create<double>(SourceSystemCoordinates.Count * 3, 1);
 
             for (int matrixIndex = 0, listIndex = 0;
-                matrixIndex < _sourceSystemCoordinates.Count * 3 && listIndex < _sourceSystemCoordinates.Count;
+                matrixIndex < SourceSystemCoordinates.Count * 3 && listIndex < SourceSystemCoordinates.Count;
                 matrixIndex += 3, listIndex++)
             {
                 yMatrix[matrixIndex, 0] =
-                    _destinationSystemCoordinates[listIndex].X - _sourceSystemCoordinates[listIndex].X;
+                    DestinationSystemCoordinates[listIndex].X - SourceSystemCoordinates[listIndex].X;
                 yMatrix[matrixIndex + 1, 0] =
-                    _destinationSystemCoordinates[listIndex].Y - _sourceSystemCoordinates[listIndex].Y;
+                    DestinationSystemCoordinates[listIndex].Y - SourceSystemCoordinates[listIndex].Y;
                 yMatrix[matrixIndex + 2, 0] =
-                    _destinationSystemCoordinates[listIndex].Z - _sourceSystemCoordinates[listIndex].Z;
+                    DestinationSystemCoordinates[listIndex].Z - SourceSystemCoordinates[listIndex].Z;
             }
 
             return yMatrix;
@@ -155,7 +151,7 @@ namespace CalculateParameters
         private Matrix<double> GetVMatrix(Matrix<double> aMatrix, Matrix<double> yMatrix,
             Matrix<double> vecParamsMatrix)
         {
-            var vMatrix = Matrix.Create<double>(_sourceSystemCoordinates.Count * 3, 1);
+            var vMatrix = Matrix.Create<double>(SourceSystemCoordinates.Count * 3, 1);
             var Ap = Matrix.Multiply(aMatrix, vecParamsMatrix);
             // V = A * P - Y
             vMatrix = (DenseMatrix<double>) Matrix.Subtract(Ap, yMatrix);
@@ -170,14 +166,14 @@ namespace CalculateParameters
 
         private double CalculateMCoefficient(double fCoefficient)
         {
-            return Math.Sqrt(fCoefficient / (_sourceSystemCoordinates.Count * 3 - 7));
+            return Math.Sqrt(fCoefficient / (SourceSystemCoordinates.Count * 3 - 7));
         }
-        
+
         private Matrix<double> GetQMatrix(Matrix<double> aMatrix)
         {
             return Matrix.Multiply(aMatrix.Transpose(), aMatrix).GetInverse();
         }
-        
+
         private Matrix<double> GetMeanSquareErrorsMatrix(Matrix<double> qMatrix, double mCoefficient)
         {
             var qDiagonal = qMatrix.GetDiagonal().ToColumnMatrix().SqrtInPlace();
@@ -186,7 +182,7 @@ namespace CalculateParameters
 
         #region InternalMethodsForTesting
 
-        internal Matrix<double> FormingCoordinateMatrixTst(List<SystemCoordinate> list)
+        internal Matrix<double> FormingCoordinateMatrixTst(List<Coordinates> list)
         {
             return FormingCoordinateMatrix(list);
         }
@@ -233,16 +229,7 @@ namespace CalculateParameters
         {
             return GetMeanSquareErrorsMatrix(qMatrix, mCoefficient);
         }
-        
-        #endregion
-    }
 
-    public interface ITransform
-    {
-        double Wx { get; set; }
-        double Wy { get; set; }
-        double Wz { get; set; }
-        double M { get; set; }
-        void CalculateTransformationParameters();
+        #endregion
     }
 }

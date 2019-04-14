@@ -13,30 +13,30 @@ public class NewtonIterationProcessTest
         "D:\\RiderProjects\\-SCPT-SystemCoordinateParametersTransformation\\SCPT\\CalculateParameters\\Tests\\NewtonIterationProcess";
 
     [Fact]
-    private  void NewtonIterationProcess_InitializeCtorNullParameters_ThrowsNullReferenceException()
+    private void NewtonIterationProcess_InitializeCtorNullParameters_ThrowsNullReferenceException()
     {
         Action test = () => new NewtonIterationProcess(null, null);
         Assert.Throws<NullReferenceException>(test);
     }
 
     [Fact]
-    private  void NewtonIterationProcess_InitCtorInvalidListCount_ThrowsArgumentException()
+    private void NewtonIterationProcess_InitCtorInvalidListCount_ThrowsArgumentException()
     {
-        var sourceCoordinates = new List<SystemCoordinate>();
-        var destinationCoordinates = new List<SystemCoordinate>();
+        var sourceCoordinates = new List<Coordinates>();
+        var destinationCoordinates = new List<Coordinates>();
 
         Action test1 = () => new NewtonIterationProcess(sourceCoordinates, destinationCoordinates); // empty
 
-        sourceCoordinates.Add(new SystemCoordinate(0, 0, 0));
-        destinationCoordinates.Add(new SystemCoordinate(1, 1, 1));
+        sourceCoordinates.Add(new Coordinates(0, 0, 0));
+        destinationCoordinates.Add(new Coordinates(1, 1, 1));
         Action test2 = () => new NewtonIterationProcess(sourceCoordinates, destinationCoordinates); // with 1
 
-        sourceCoordinates.Add(new SystemCoordinate(0, 0, 0));
-        destinationCoordinates.Add(new SystemCoordinate(1, 1, 1));
+        sourceCoordinates.Add(new Coordinates(0, 0, 0));
+        destinationCoordinates.Add(new Coordinates(1, 1, 1));
         Action test3 = () => new NewtonIterationProcess(sourceCoordinates, destinationCoordinates); // with 2
 
-        sourceCoordinates.Add(new SystemCoordinate(0, 0, 0));
-        destinationCoordinates.Add(new SystemCoordinate(1, 1, 1));
+        sourceCoordinates.Add(new Coordinates(0, 0, 0));
+        destinationCoordinates.Add(new Coordinates(1, 1, 1));
         Action test4 = () => new NewtonIterationProcess(sourceCoordinates, destinationCoordinates); // with 3
 
         destinationCoordinates.RemoveAt(2);
@@ -50,17 +50,50 @@ public class NewtonIterationProcessTest
     }
 
     [Fact]
-    private  void NewtonIterationProcess_FormingCoordinateMatrix_ValidMatrixCoordinate()
+    private void NewtonIterationProcess_CheckListGetSourceAndDestinationSystemCoordinate_ValidSourceAndDestinationSystemCoordinate()
     {
-        var listSrc = new List<SystemCoordinate>();
-        var listDest = new List<SystemCoordinate>();
+        var listSrcExpected = new List<Coordinates>();
+        var listDstExpected = new List<Coordinates>();
 
         var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
         var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
         for (int row = 0; row < srcMatrix.RowCount; row++)
         {
-            listSrc.Add(new SystemCoordinate(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new SystemCoordinate(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
+            listSrcExpected.Add(new Coordinates(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
+            listDstExpected.Add(new Coordinates(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
+        }
+
+        var a = new NewtonIterationProcess(listSrcExpected, listDstExpected);
+        var listSrcActual = a.SourceSystemCoordinates;
+        var listDstActual = a.DestinationSystemCoordinates;
+        
+        Assert.Equal(listSrcExpected.Count, listSrcActual.Count);
+        Assert.Equal(listDstExpected.Count, listDstActual.Count);
+
+        for (int i = 0; i < a.SourceSystemCoordinates.Count; i++)
+        {
+            Assert.Equal(listSrcExpected[i].X, listSrcActual[i].X);
+            Assert.Equal(listSrcExpected[i].Y, listSrcActual[i].Y);
+            Assert.Equal(listSrcExpected[i].Z, listSrcActual[i].Z);
+            
+            Assert.Equal(listDstExpected[i].X, listDstActual[i].X);
+            Assert.Equal(listDstExpected[i].Y, listDstActual[i].Y);
+            Assert.Equal(listDstExpected[i].Z, listDstActual[i].Z);
+        }
+    }
+
+    [Fact]
+    private void NewtonIterationProcess_FormingCoordinateMatrix_ValidMatrixCoordinate()
+    {
+        var listSrc = new List<Coordinates>();
+        var listDest = new List<Coordinates>();
+
+        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
+        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
+        for (int row = 0; row < srcMatrix.RowCount; row++)
+        {
+            listSrc.Add(new Coordinates(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
+            listDest.Add(new Coordinates(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
         }
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
@@ -80,18 +113,18 @@ public class NewtonIterationProcessTest
     }
 
     [Fact]
-    private  void NewtonIterationProcess_FormingAMatrix_ValidAMatrix()
+    private void NewtonIterationProcess_FormingAMatrix_ValidAMatrix()
     {
-        var listSrc = new List<SystemCoordinate>();
-        var listDest = new List<SystemCoordinate>();
+        var listSrc = new List<Coordinates>();
+        var listDest = new List<Coordinates>();
 
         var test = ReadControlDataFromFile(Path + "\\aMatrix.txt", 30, 7);
         var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
         var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
         for (int row = 0; row < srcMatrix.RowCount; row++)
         {
-            listSrc.Add(new SystemCoordinate(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new SystemCoordinate(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
+            listSrc.Add(new Coordinates(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
+            listDest.Add(new Coordinates(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
         }
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
@@ -108,18 +141,18 @@ public class NewtonIterationProcessTest
     }
 
     [Fact]
-    private  void NewtonIterationProcess_FormingYMatrix_ValidYMatrix()
+    private void NewtonIterationProcess_FormingYMatrix_ValidYMatrix()
     {
-        var listSrc = new List<SystemCoordinate>();
-        var listDest = new List<SystemCoordinate>();
+        var listSrc = new List<Coordinates>();
+        var listDest = new List<Coordinates>();
 
         var yMatrixExpected = ReadControlDataFromFile(Path + "\\yMatrix.txt", 30, 1);
         var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
         var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
         for (int row = 0; row < srcMatrix.RowCount; row++)
         {
-            listSrc.Add(new SystemCoordinate(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new SystemCoordinate(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
+            listSrc.Add(new Coordinates(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
+            listDest.Add(new Coordinates(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
         }
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
@@ -136,10 +169,10 @@ public class NewtonIterationProcessTest
     }
 
     [Fact]
-    private  void NewtonIterationProcess_GetVectorWithTransformParameters_ValidPMatrix()
+    private void NewtonIterationProcess_GetVectorWithTransformParameters_ValidPMatrix()
     {
-        var listSrc = new List<SystemCoordinate>();
-        var listDest = new List<SystemCoordinate>();
+        var listSrc = new List<Coordinates>();
+        var listDest = new List<Coordinates>();
 
         var aMatrix = ReadControlDataFromFile(Path + "\\aMatrix.txt", 30, 7);
         var yMatrix = ReadControlDataFromFile(Path + "\\yMatrix.txt", 30, 1);
@@ -148,8 +181,8 @@ public class NewtonIterationProcessTest
         var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
         for (int row = 0; row < srcMatrix.RowCount; row++)
         {
-            listSrc.Add(new SystemCoordinate(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new SystemCoordinate(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
+            listSrc.Add(new Coordinates(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
+            listDest.Add(new Coordinates(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
         }
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
@@ -168,16 +201,16 @@ public class NewtonIterationProcessTest
     [Fact]
     private void NewtonIterationProcess_GetVMatrix_ValidVMatrix()
     {
-        var listSrc = new List<SystemCoordinate>();
-        var listDest = new List<SystemCoordinate>();
+        var listSrc = new List<Coordinates>();
+        var listDest = new List<Coordinates>();
 
         var vMatrixExpected = ReadControlDataFromFile(Path + "\\vMatrix.txt", 30, 1);
         var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
         var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
         for (int row = 0; row < srcMatrix.RowCount; row++)
         {
-            listSrc.Add(new SystemCoordinate(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new SystemCoordinate(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
+            listSrc.Add(new Coordinates(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
+            listDest.Add(new Coordinates(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
         }
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
@@ -198,15 +231,15 @@ public class NewtonIterationProcessTest
     [Fact]
     private void NewtonIterationProcess_CalculateFCoefficient_ValidFCoefficient()
     {
-        var listSrc = new List<SystemCoordinate>();
-        var listDest = new List<SystemCoordinate>();
+        var listSrc = new List<Coordinates>();
+        var listDest = new List<Coordinates>();
 
         var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
         var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
         for (int row = 0; row < srcMatrix.RowCount; row++)
         {
-            listSrc.Add(new SystemCoordinate(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new SystemCoordinate(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
+            listSrc.Add(new Coordinates(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
+            listDest.Add(new Coordinates(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
         }
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
@@ -224,15 +257,15 @@ public class NewtonIterationProcessTest
     [Fact]
     private void NewtonIterationProcess_CalculateMCoefficient_ValidMCoefficient()
     {
-        var listSrc = new List<SystemCoordinate>();
-        var listDest = new List<SystemCoordinate>();
+        var listSrc = new List<Coordinates>();
+        var listDest = new List<Coordinates>();
 
         var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
         var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
         for (int row = 0; row < srcMatrix.RowCount; row++)
         {
-            listSrc.Add(new SystemCoordinate(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new SystemCoordinate(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
+            listSrc.Add(new Coordinates(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
+            listDest.Add(new Coordinates(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
         }
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
@@ -241,7 +274,7 @@ public class NewtonIterationProcessTest
         var paramsTransformMatrix = nip.GetVectorWithTransformParametersTst(aMatrix, yMatrix);
         var vMatrix = nip.GetVMatrixTst(aMatrix, yMatrix, paramsTransformMatrix);
         var fCoefficient = nip.CalculateFCoefficientTst(vMatrix);
-        
+
         var mCoefficientActual = nip.CalculateMCoefficientTst(fCoefficient);
         var mCoefficientExpected = 0.000126585;
         Assert.Equal(mCoefficientExpected, mCoefficientActual, 6); // 10^-6 m
@@ -250,44 +283,44 @@ public class NewtonIterationProcessTest
     [Fact]
     private void NewtonIterationProcess_GetQMatrix_ValidQMatrix()
     {
-        var listSrc = new List<SystemCoordinate>();
-        var listDest = new List<SystemCoordinate>();
+        var listSrc = new List<Coordinates>();
+        var listDest = new List<Coordinates>();
 
         var qMatrixActual = ReadControlDataFromFile(Path + "\\qMatrix.txt", 7, 7);
         var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
         var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
         for (int row = 0; row < srcMatrix.RowCount; row++)
         {
-            listSrc.Add(new SystemCoordinate(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new SystemCoordinate(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
+            listSrc.Add(new Coordinates(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
+            listDest.Add(new Coordinates(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
         }
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
         var aMatrix = nip.FormingAMatrixTst();
         var qMatrixExpected = nip.GetQMatrixTst(aMatrix);
-        
+
         for (int row = 0; row < qMatrixExpected.RowCount; row++)
         {
             for (int col = 0; col < qMatrixExpected.ColumnCount; col++)
             {
-                Assert.Equal(qMatrixExpected[row, col], qMatrixActual[row, col], 5); 
+                Assert.Equal(qMatrixExpected[row, col], qMatrixActual[row, col], 5);
             }
         }
     }
-    
+
     [Fact]
     private void NewtonIterationProcess_GetMeanSquareErrorsMatrix_ValidMeanSquareErrorsMatrix()
     {
-        var listSrc = new List<SystemCoordinate>();
-        var listDest = new List<SystemCoordinate>();
+        var listSrc = new List<Coordinates>();
+        var listDest = new List<Coordinates>();
 
         var mceMatrixActual = ReadControlDataFromFile(Path + "\\mceMatrix.txt", 7, 7);
         var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
         var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
         for (int row = 0; row < srcMatrix.RowCount; row++)
         {
-            listSrc.Add(new SystemCoordinate(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new SystemCoordinate(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
+            listSrc.Add(new Coordinates(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
+            listDest.Add(new Coordinates(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
         }
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
@@ -298,16 +331,44 @@ public class NewtonIterationProcessTest
         var fCoefficient = nip.CalculateFCoefficientTst(vMatrix);
         var mCoefficient = nip.CalculateMCoefficientTst(fCoefficient);
         var qMatrix = nip.GetQMatrixTst(aMatrix);
-        
+
         var mceMatrixExpected = nip.GetMeanSquareErrorsMatrixTst(qMatrix, mCoefficient);
-        
+
         for (int row = 0; row < mceMatrixExpected.RowCount; row++)
         {
             for (int col = 0; col < mceMatrixExpected.ColumnCount; col++)
             {
-                Assert.Equal(mceMatrixExpected[row, col], mceMatrixActual[row, col], 8); 
+                Assert.Equal(mceMatrixExpected[row, col], mceMatrixActual[row, col], 8);
             }
         }
+    }
+
+    [Fact]
+    private void NewtonIterationProcess_CheckSquareErrorsMatrixAndTransformParametersMatrix_Valid()
+    {
+        var listSrc = new List<Coordinates>();
+        var listDest = new List<Coordinates>();
+
+        var mceMatrixActual = ReadControlDataFromFile(Path + "\\mceMatrix.txt", 7, 7);
+        var pMatrixActual = ReadControlDataFromFile(Path + "\\pMatrix.txt", 7, 1);
+        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
+        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
+        for (int row = 0; row < srcMatrix.RowCount; row++)
+        {
+            listSrc.Add(new Coordinates(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
+            listDest.Add(new Coordinates(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
+        }
+        
+        var nip = new NewtonIterationProcess(listSrc, listDest);
+        nip.CalculateTransformationParameters();
+        
+        for (int row = 0; row < nip.TransformParametersMatrix.RowCount; row++)
+            for (int col = 0; col < nip.TransformParametersMatrix.ColumnCount; col++)
+                Assert.Equal(nip.TransformParametersMatrix[row, col], pMatrixActual[row, col], 8);
+            
+        for (int row = 0; row < nip.MeanSquareErrorsMatrix.RowCount; row++)
+            for (int col = 0; col < nip.MeanSquareErrorsMatrix.ColumnCount; col++)
+                Assert.Equal(nip.MeanSquareErrorsMatrix[row, col], mceMatrixActual[row, col], 8);
     }
 
     private DenseMatrix<double> ReadControlDataFromFile(string path, int row, int col)
