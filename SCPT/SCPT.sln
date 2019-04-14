@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculateParameters", "CalculateParameters\CalculateParameters.csproj", "{1089642A-D57B-4BCF-902B-7C9A3D9D8482}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculateParameters", "CalculateParameters\SCPT.csproj", "{1089642A-D57B-4BCF-902B-7C9A3D9D8482}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

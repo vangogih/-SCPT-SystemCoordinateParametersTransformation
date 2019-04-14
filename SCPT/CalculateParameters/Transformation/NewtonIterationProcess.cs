@@ -1,23 +1,42 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using Extreme.Mathematics;
 using Extreme.Mathematics.LinearAlgebra;
 
-namespace CalculateParameters
+namespace SCPT.Transformation
 {
     public class NewtonIterationProcess
     {
         private const int MinListCount = 3;
 
-        public List<Coordinates> SourceSystemCoordinates { get; }
-        public List<Coordinates> DestinationSystemCoordinates { get; }
+        /// <summary>
+        /// list X,Y,Z source coordinates 
+        /// </summary>
+        public List<Point> SourceSystemCoordinates { get; }
 
+        /// <summary>
+        /// list X,Y,Z destination coordinates
+        /// </summary>
+        public List<Point> DestinationSystemCoordinates { get; }
+
+        /// <summary>
+        /// matrix containing parameters transformation from source SC to destination SC
+        /// </summary>
         public Matrix<double> TransformParametersMatrix { get; private set; }
+
+        /// <summary>
+        /// matrix containing mean square errors parameters transformation
+        /// </summary>
         public Matrix<double> MeanSquareErrorsMatrix { get; private set; }
 
-        public NewtonIterationProcess(List<Coordinates> source, List<Coordinates> destination)
+        /// <summary>
+        /// is a method for finding successively better approximations to the roots (or zeroes) of a real-valued function. 
+        /// </summary>
+        /// <param name="source">list source coordinates which will be translated to destination coordinates</param>
+        /// <param name="destination">list destination coordinates</param>
+        /// <exception cref="NullReferenceException">throw then source list and destination list reference is null</exception>
+        /// <exception cref="ArgumentException">throw then source list and destination list have different length</exception>
+        public NewtonIterationProcess(List<Point> source, List<Point> destination)
         {
             if (source == null)
                 throw new NullReferenceException("source list cannot be null");
@@ -32,9 +51,11 @@ namespace CalculateParameters
 
             SourceSystemCoordinates = source;
             DestinationSystemCoordinates = destination;
+            
+            CalculateTransformationParameters();
         }
 
-        public void CalculateTransformationParameters()
+        private void CalculateTransformationParameters()
         {
             var aMatrix = FormingAMatrix();
             var yMatrix = FormingYMatrix();
@@ -49,7 +70,7 @@ namespace CalculateParameters
             MeanSquareErrorsMatrix = mceMatrix;
         }
 
-        private Matrix<double> FormingCoordinateMatrix(List<Coordinates> list)
+        private Matrix<double> FormingCoordinateMatrix(List<Point> list)
         {
             var vectorMatrix = Matrix.Create<double>(list.Count, 3); // matrix [nx3]
             for (int i = 0; i < list.Count; i++)
@@ -182,7 +203,7 @@ namespace CalculateParameters
 
         #region InternalMethodsForTesting
 
-        internal Matrix<double> FormingCoordinateMatrixTst(List<Coordinates> list)
+        internal Matrix<double> FormingCoordinateMatrixTst(List<Point> list)
         {
             return FormingCoordinateMatrix(list);
         }
