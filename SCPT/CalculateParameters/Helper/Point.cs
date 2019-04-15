@@ -1,6 +1,6 @@
 using System;
 
-namespace SCPT.Transformation
+namespace SCPT.Helper
 {
     public class Point
     {

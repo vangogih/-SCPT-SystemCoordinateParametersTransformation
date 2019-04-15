@@ -61,11 +61,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helper\ConvertMatrix.cs" />
+    <Compile Include="Helper\Extension.cs" />
+    <Compile Include="Helper\Point.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tests\ConvertMatrix\ConvertMatrixTests.cs" />
     <Compile Include="Tests\NewtonIterationProcess\NewtonIterarionProcessTests.cs" />
-    <Compile Include="Tests\NewtonIterationProcess\CoordinatesTests.cs" />
-    <Compile Include="Transformation\Point.cs" />
+    <Compile Include="Tests\NewtonIterationProcess\PointTests.cs" />
+    <Compile Include="Transformation\LinearProcedure.cs" />
     <Compile Include="Transformation\NewtonIterationProcess.cs" />
+    <Compile Include="Transformation\SingularValueDecomposition.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

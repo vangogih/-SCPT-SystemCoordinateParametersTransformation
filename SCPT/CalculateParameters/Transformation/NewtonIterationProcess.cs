@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Extreme.Mathematics;
 using Extreme.Mathematics.LinearAlgebra;
+using SCPT.Helper;
 
 namespace SCPT.Transformation
 {
@@ -10,24 +11,52 @@ namespace SCPT.Transformation
         private const int MinListCount = 3;
 
         /// <summary>
-        /// list X,Y,Z source coordinates 
+        /// list X,Y,Z source coordinates in maters dimension.
         /// </summary>
         public List<Point> SourceSystemCoordinates { get; }
 
         /// <summary>
-        /// list X,Y,Z destination coordinates
+        /// list X,Y,Z destination coordinates in meters dimension. 
         /// </summary>
         public List<Point> DestinationSystemCoordinates { get; }
 
         /// <summary>
-        /// matrix containing parameters transformation from source SC to destination SC
+        /// [3,3] matrix containing parameters of rotation source SC regarding destination SC.
+        ///  All values has dimension in radians.
+        ///  <example>
+        /// |1  wz -wy|
+        /// |-wz 1  wx|
+        /// | wy -wx 1|
+        /// </example>
         /// </summary>
-        public Matrix<double> TransformParametersMatrix { get; private set; }
+        public Matrix<double> RotationMatrix { get; private set; }
 
+        // TODO write test field DeltaCoordinateMatrix
         /// <summary>
-        /// matrix containing mean square errors parameters transformation
+        /// [3,1] vector containing deltas (dx,dy,dz) of source SC regarding destination SC.
+        ///  All values has dimension in meters.
+        /// <example>
+        /// [dx,dy,dz]
+        /// </example>
         /// </summary>
-        public Matrix<double> MeanSquareErrorsMatrix { get; private set; }
+        public Vector<double> DeltaCoordinateMatrix { get; private set; }
+
+        // TODO write test field M
+        /// <summary>
+        /// scale factor in ppm (1 + m)
+        /// </summary>
+        public double M { get; private set; }
+        
+        /// <summary>
+        /// [7,1] vector containing mean square errors parameters transformation.
+        ///  m(dx),m(dy),m(dz) has dimension in meters.
+        ///  m(wx),m(wy),m(wz) has dimension in radians.
+        ///  m has dimension in ppm (1+m) 
+        /// <example>
+        /// [m(dx),m(dy),m(dz),m(wx),m(wy),m(wz),m(m)], where m(f) is mean square errors f value
+        /// </example>
+        /// </summary>
+        public Vector<double> MeanSquareErrorsMatrix { get; private set; }
 
         /// <summary>
         /// is a method for finding successively better approximations to the roots (or zeroes) of a real-valued function. 
@@ -51,7 +80,7 @@ namespace SCPT.Transformation
 
             SourceSystemCoordinates = source;
             DestinationSystemCoordinates = destination;
-            
+
             CalculateTransformationParameters();
         }
 
@@ -66,7 +95,9 @@ namespace SCPT.Transformation
             var qMatrix = GetQMatrix(aMatrix);
             var mceMatrix = GetMeanSquareErrorsMatrix(qMatrix, mCoefficient);
 
-            TransformParametersMatrix = paramsTransformMatrix;
+            RotationMatrix = ConvertMatrix.VectorParametersToRotateMatrix(paramsTransformMatrix);
+            DeltaCoordinateMatrix = ConvertMatrix.VectorParametersToDeltaCoordinate(paramsTransformMatrix);
+            M = paramsTransformMatrix[6, 0];
             MeanSquareErrorsMatrix = mceMatrix;
         }
 
@@ -195,10 +226,10 @@ namespace SCPT.Transformation
             return Matrix.Multiply(aMatrix.Transpose(), aMatrix).GetInverse();
         }
 
-        private Matrix<double> GetMeanSquareErrorsMatrix(Matrix<double> qMatrix, double mCoefficient)
+        private Vector<double> GetMeanSquareErrorsMatrix(Matrix<double> qMatrix, double mCoefficient)
         {
             var qDiagonal = qMatrix.GetDiagonal().ToColumnMatrix().SqrtInPlace();
-            return Matrix.Multiply(qDiagonal, mCoefficient);
+            return Matrix.Multiply(qDiagonal, mCoefficient).ReshapeAsVector();
         }
 
         #region InternalMethodsForTesting
@@ -246,7 +277,7 @@ namespace SCPT.Transformation
             return GetQMatrix(aMatrix);
         }
 
-        internal Matrix<double> GetMeanSquareErrorsMatrixTst(Matrix<double> qMatrix, double mCoefficient)
+        internal Vector<double> GetMeanSquareErrorsMatrixTst(Matrix<double> qMatrix, double mCoefficient)
         {
             return GetMeanSquareErrorsMatrix(qMatrix, mCoefficient);
         }
