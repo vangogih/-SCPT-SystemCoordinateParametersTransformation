@@ -6,57 +6,41 @@ using SCPT.Helper;
 
 namespace SCPT.Transformation
 {
-    public class NewtonIterationProcess
+    public sealed class NewtonIterationProcess : AbstractTransformation
     {
         private const int MinListCount = 3;
 
         /// <summary>
-        /// list X,Y,Z source coordinates in maters dimension.
+        /// <inheritdoc cref="AbstractTransformation.SourceSystemCoordinates" />
         /// </summary>
-        public List<Point> SourceSystemCoordinates { get; }
+        public new List<Point> SourceSystemCoordinates { get; }
 
         /// <summary>
-        /// list X,Y,Z destination coordinates in meters dimension. 
+        /// <inheritdoc cref="AbstractTransformation.DestinationSystemCoordinates"/>
         /// </summary>
-        public List<Point> DestinationSystemCoordinates { get; }
+        public new List<Point> DestinationSystemCoordinates { get; }
 
         /// <summary>
-        /// [3,3] matrix containing parameters of rotation source SC regarding destination SC.
-        ///  All values has dimension in radians.
-        ///  <example>
-        /// |1  wz -wy|
-        /// |-wz 1  wx|
-        /// | wy -wx 1|
-        /// </example>
+        /// <inheritdoc cref="AbstractTransformation.RotationMatrix"/>
         /// </summary>
-        public Matrix<double> RotationMatrix { get; private set; }
+        public new Matrix<double> RotationMatrix { get; private set; }
 
         // TODO write test field DeltaCoordinateMatrix
         /// <summary>
-        /// [3,1] vector containing deltas (dx,dy,dz) of source SC regarding destination SC.
-        ///  All values has dimension in meters.
-        /// <example>
-        /// [dx,dy,dz]
-        /// </example>
+        /// <inheritdoc cref="AbstractTransformation.DeltaCoordinateMatrix"/>
         /// </summary>
-        public Vector<double> DeltaCoordinateMatrix { get; private set; }
+        public new Vector<double> DeltaCoordinateMatrix { get; private set; }
 
         // TODO write test field M
         /// <summary>
-        /// scale factor in ppm (1 + m)
+        /// <inheritdoc cref="AbstractTransformation.M"/>
         /// </summary>
-        public double M { get; private set; }
-        
+        public new double M { get; private set; }
+
         /// <summary>
-        /// [7,1] vector containing mean square errors parameters transformation.
-        ///  m(dx),m(dy),m(dz) has dimension in meters.
-        ///  m(wx),m(wy),m(wz) has dimension in radians.
-        ///  m has dimension in ppm (1+m) 
-        /// <example>
-        /// [m(dx),m(dy),m(dz),m(wx),m(wy),m(wz),m(m)], where m(f) is mean square errors f value
-        /// </example>
+        /// <inheritdoc cref="AbstractTransformation.MeanSquareErrorsMatrix"/>
         /// </summary>
-        public Vector<double> MeanSquareErrorsMatrix { get; private set; }
+        public new Vector<double> MeanSquareErrorsMatrix { get; private set; }
 
         /// <summary>
         /// is a method for finding successively better approximations to the roots (or zeroes) of a real-valued function. 
@@ -65,18 +49,12 @@ namespace SCPT.Transformation
         /// <param name="destination">list destination coordinates</param>
         /// <exception cref="NullReferenceException">throw then source list and destination list reference is null</exception>
         /// <exception cref="ArgumentException">throw then source list and destination list have different length</exception>
-        public NewtonIterationProcess(List<Point> source, List<Point> destination)
+        public NewtonIterationProcess(List<Point> source, List<Point> destination) : base(source, destination)
         {
-            if (source == null)
-                throw new NullReferenceException("source list cannot be null");
-            if (destination == null)
-                throw new NullReferenceException("destination list cannot be null");
             if (source.Count <= MinListCount)
                 throw new ArgumentException("source list count cannot be less when 4");
             if (destination.Count <= MinListCount)
                 throw new ArgumentException("source list count cannot be less when 4");
-            if (source.Count != destination.Count)
-                throw new ArgumentException("source list and destination list must be of the same length");
 
             SourceSystemCoordinates = source;
             DestinationSystemCoordinates = destination;

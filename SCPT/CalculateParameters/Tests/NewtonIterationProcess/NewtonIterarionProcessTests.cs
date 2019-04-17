@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using Extreme.Mathematics;
-using Extreme.Mathematics.LinearAlgebra;
 using SCPT.Helper;
+using SCPT.Tests;
 using SCPT.Transformation;
 using Xunit;
 
 
-public class NewtonIterationProcessTst
+public class NewtonIterationProcessTst : BaseTest
 {
-    private const string Path =
-        "D:\\RiderProjects\\-SCPT-SystemCoordinateParametersTransformation\\SCPT\\CalculateParameters\\Tests\\NewtonIterationProcess";
+    private string PathToTestTxt = PathToTest + "\\NewtonIterationProcess";
 
     [Fact]
     private void NewtonIterationProcess_InitializeCtorNullParameters_ThrowsNullReferenceException()
@@ -57,14 +54,7 @@ public class NewtonIterationProcessTst
     {
         var listSrcExpected = new List<Point>();
         var listDstExpected = new List<Point>();
-
-        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
-        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
-        for (int row = 0; row < srcMatrix.RowCount; row++)
-        {
-            listSrcExpected.Add(new Point(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDstExpected.Add(new Point(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
-        }
+        FillListsCoordinationData(PathToTestTxt, ref listSrcExpected, ref listDstExpected);
 
         var a = new NewtonIterationProcess(listSrcExpected, listDstExpected);
         var listSrcActual = a.SourceSystemCoordinates;
@@ -90,14 +80,7 @@ public class NewtonIterationProcessTst
     {
         var listSrc = new List<Point>();
         var listDest = new List<Point>();
-
-        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
-        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
-        for (int row = 0; row < srcMatrix.RowCount; row++)
-        {
-            listSrc.Add(new Point(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new Point(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
-        }
+        FillListsCoordinationData(PathToTestTxt, ref listSrc, ref listDest);
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
         var controlSrcMatrix = nip.FormingCoordinateMatrixTst(listSrc);
@@ -120,15 +103,9 @@ public class NewtonIterationProcessTst
     {
         var listSrc = new List<Point>();
         var listDest = new List<Point>();
+        FillListsCoordinationData(PathToTestTxt, ref listSrc, ref listDest);
 
-        var test = ReadControlDataFromFile(Path + "\\aMatrix.txt", 30, 7);
-        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
-        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
-        for (int row = 0; row < srcMatrix.RowCount; row++)
-        {
-            listSrc.Add(new Point(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new Point(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
-        }
+        var test = ReadControlDataFromFile(PathToTestTxt + "\\aMatrix.txt", 30, 7);
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
         var controlMatrixSrc = nip.FormingAMatrixTst();
@@ -148,15 +125,9 @@ public class NewtonIterationProcessTst
     {
         var listSrc = new List<Point>();
         var listDest = new List<Point>();
+        FillListsCoordinationData(PathToTestTxt, ref listSrc, ref listDest);
 
-        var yMatrixExpected = ReadControlDataFromFile(Path + "\\yMatrix.txt", 30, 1);
-        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
-        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
-        for (int row = 0; row < srcMatrix.RowCount; row++)
-        {
-            listSrc.Add(new Point(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new Point(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
-        }
+        var yMatrixExpected = ReadControlDataFromFile(PathToTestTxt + "\\yMatrix.txt", 30, 1);
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
         var yMatrixActual = nip.FormingYMatrixTst();
@@ -176,17 +147,12 @@ public class NewtonIterationProcessTst
     {
         var listSrc = new List<Point>();
         var listDest = new List<Point>();
+        FillListsCoordinationData(PathToTestTxt, ref listSrc, ref listDest);
 
-        var aMatrix = ReadControlDataFromFile(Path + "\\aMatrix.txt", 30, 7);
-        var yMatrix = ReadControlDataFromFile(Path + "\\yMatrix.txt", 30, 1);
-        var pMatrixExpected = ReadControlDataFromFile(Path + "\\pMatrix.txt", 7, 1);
-        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
-        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
-        for (int row = 0; row < srcMatrix.RowCount; row++)
-        {
-            listSrc.Add(new Point(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new Point(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
-        }
+        var aMatrix = ReadControlDataFromFile(PathToTestTxt + "\\aMatrix.txt", 30, 7);
+        var yMatrix = ReadControlDataFromFile(PathToTestTxt + "\\yMatrix.txt", 30, 1);
+        var pMatrixExpected = ReadControlDataFromFile(PathToTestTxt + "\\pMatrix.txt", 7, 1);
+
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
         var pMatrixActual = nip.GetVectorWithTransformParametersTst(aMatrix, yMatrix);
@@ -206,15 +172,9 @@ public class NewtonIterationProcessTst
     {
         var listSrc = new List<Point>();
         var listDest = new List<Point>();
+        FillListsCoordinationData(PathToTestTxt, ref listSrc, ref listDest);
 
-        var vMatrixExpected = ReadControlDataFromFile(Path + "\\vMatrix.txt", 30, 1);
-        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
-        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
-        for (int row = 0; row < srcMatrix.RowCount; row++)
-        {
-            listSrc.Add(new Point(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new Point(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
-        }
+        var vMatrixExpected = ReadControlDataFromFile(PathToTestTxt + "\\vMatrix.txt", 30, 1);
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
         var aMatrix = nip.FormingAMatrixTst();
@@ -223,12 +183,8 @@ public class NewtonIterationProcessTst
         var vMatrixActual = nip.GetVMatrixTst(aMatrix, yMatrix, vecParamsMatrix);
 
         for (int row = 0; row < vMatrixExpected.RowCount; row++)
-        {
-            for (int col = 0; col < vMatrixExpected.ColumnCount; col++)
-            {
-                Assert.Equal(vMatrixExpected[row, col], vMatrixActual[row, col], 6); // 10^-6 meters
-            }
-        }
+        for (int col = 0; col < vMatrixExpected.ColumnCount; col++)
+            Assert.Equal(vMatrixExpected[row, col], vMatrixActual[row, col], 6); // 10^-6 meters
     }
 
     [Fact]
@@ -236,14 +192,7 @@ public class NewtonIterationProcessTst
     {
         var listSrc = new List<Point>();
         var listDest = new List<Point>();
-
-        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
-        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
-        for (int row = 0; row < srcMatrix.RowCount; row++)
-        {
-            listSrc.Add(new Point(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new Point(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
-        }
+        FillListsCoordinationData(PathToTestTxt, ref listSrc, ref listDest);
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
         var aMatrix = nip.FormingAMatrixTst();
@@ -262,14 +211,7 @@ public class NewtonIterationProcessTst
     {
         var listSrc = new List<Point>();
         var listDest = new List<Point>();
-
-        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
-        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
-        for (int row = 0; row < srcMatrix.RowCount; row++)
-        {
-            listSrc.Add(new Point(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new Point(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
-        }
+        FillListsCoordinationData(PathToTestTxt, ref listSrc, ref listDest);
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
         var aMatrix = nip.FormingAMatrixTst();
@@ -288,15 +230,9 @@ public class NewtonIterationProcessTst
     {
         var listSrc = new List<Point>();
         var listDest = new List<Point>();
+        FillListsCoordinationData(PathToTestTxt, ref listSrc, ref listDest);
 
-        var qMatrixActual = ReadControlDataFromFile(Path + "\\qMatrix.txt", 7, 7);
-        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
-        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
-        for (int row = 0; row < srcMatrix.RowCount; row++)
-        {
-            listSrc.Add(new Point(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new Point(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
-        }
+        var qMatrixActual = ReadControlDataFromFile(PathToTestTxt + "\\qMatrix.txt", 7, 7);
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
         var aMatrix = nip.FormingAMatrixTst();
@@ -316,15 +252,9 @@ public class NewtonIterationProcessTst
     {
         var listSrc = new List<Point>();
         var listDest = new List<Point>();
+        FillListsCoordinationData(PathToTestTxt, ref listSrc, ref listDest);
 
-        var mceMatrixActual = ReadControlDataFromFile(Path + "\\mceMatrix.txt", 7, 1);
-        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
-        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
-        for (int row = 0; row < srcMatrix.RowCount; row++)
-        {
-            listSrc.Add(new Point(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new Point(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
-        }
+        var mceMatrixActual = ReadControlDataFromFile(PathToTestTxt + "\\mceMatrix.txt", 7, 1);
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
         var aMatrix = nip.FormingAMatrixTst();
@@ -338,7 +268,7 @@ public class NewtonIterationProcessTst
         var mceMatrixExpected = nip.GetMeanSquareErrorsMatrixTst(qMatrix, mCoefficient);
 
         for (int row = 0; row < mceMatrixExpected.Length; row++)
-                Assert.Equal(mceMatrixExpected[row], mceMatrixActual[row, 0], 8);
+            Assert.Equal(mceMatrixExpected[row], mceMatrixActual[row, 0], 8);
     }
 
     [Fact]
@@ -346,16 +276,10 @@ public class NewtonIterationProcessTst
     {
         var listSrc = new List<Point>();
         var listDest = new List<Point>();
+        FillListsCoordinationData(PathToTestTxt, ref listSrc, ref listDest);
 
-        var mceMatrixActual = ReadControlDataFromFile(Path + "\\mceMatrix.txt", 7, 1);
-        var pMatrixActual = ReadControlDataFromFile(Path + "\\rotationMatrix.txt", 3, 3);
-        var srcMatrix = ReadControlDataFromFile(Path + "\\testpoints_src.txt", 10, 3);
-        var dstMatrix = ReadControlDataFromFile(Path + "\\testpoints_dest.txt", 10, 3);
-        for (int row = 0; row < srcMatrix.RowCount; row++)
-        {
-            listSrc.Add(new Point(srcMatrix[row, 0], srcMatrix[row, 1], srcMatrix[row, 2]));
-            listDest.Add(new Point(dstMatrix[row, 0], dstMatrix[row, 1], dstMatrix[row, 2]));
-        }
+        var mceMatrixActual = ReadControlDataFromFile(PathToTestTxt + "\\mceMatrix.txt", 7, 1);
+        var pMatrixActual = ReadControlDataFromFile(PathToTestTxt + "\\rotationMatrix.txt", 3, 3);
 
         var nip = new NewtonIterationProcess(listSrc, listDest);
 
@@ -364,20 +288,7 @@ public class NewtonIterationProcessTst
             Assert.Equal(nip.RotationMatrix[row, col], pMatrixActual[row, col], 8);
 
         for (int row = 0; row < nip.MeanSquareErrorsMatrix.Length; row++)
-            Assert.Equal(nip.MeanSquareErrorsMatrix[row], mceMatrixActual[row,0], 8);
-    }
-
-    private DenseMatrix<double> ReadControlDataFromFile(string path, int row, int col)
-    {
-        var matrixFromData = Matrix.Create<double>(row, col);
-        var data = File.ReadAllLines(path);
-        for (int textRow = 0; textRow < data.Length; textRow++)
-        {
-            var split = data[textRow].Split(' ');
-            for (int textCol = 0; textCol < split.Length; textCol++)
-                matrixFromData[textRow, textCol] = Convert.ToDouble(split[textCol]);
-        }
-
-        return matrixFromData;
+            Assert.Equal(nip.MeanSquareErrorsMatrix[row], mceMatrixActual[row, 0], 8);
     }
 }
+
