@@ -1,6 +1,6 @@
 namespace SCPT.Transformation
 {
-    public class SingularValueDecomposition
+    internal class SingularValueDecomposition
     {
         // TODO add add transformation founded on Singular Value Decomposition (SVD)
     }

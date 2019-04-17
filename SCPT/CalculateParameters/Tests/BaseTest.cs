@@ -5,7 +5,8 @@ using Extreme.Mathematics;
 using Extreme.Mathematics.LinearAlgebra;
 using SCPT.Helper;
 
-namespace SCPT.Tests
+
+internal partial class Incapsulation
 {
     public abstract class BaseTest
     {

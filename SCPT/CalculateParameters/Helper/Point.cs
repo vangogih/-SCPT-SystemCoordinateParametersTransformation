@@ -2,6 +2,9 @@ using System;
 
 namespace SCPT.Helper
 {
+    /// <summary>
+    /// Point, an entity that has a location in space or on a plane, but has no extent
+    /// </summary>
     public class Point
     {
         /// <summary>
@@ -19,9 +22,6 @@ namespace SCPT.Helper
         /// </summary>
         public double Z { get; }
 
-        /// <summary>
-        /// Point, an entity that has a location in space or on a plane, but has no extent
-        /// </summary>
         /// <exception cref="ArgumentException">throw then coordinate cannot be NaN</exception>
         /// <exception cref="ArithmeticException">throw then coordinate attained infinity</exception>
         public Point(double x, double y, double z)

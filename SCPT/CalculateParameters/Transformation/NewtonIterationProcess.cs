@@ -6,9 +6,22 @@ using SCPT.Helper;
 
 namespace SCPT.Transformation
 {
+    /// <summary>
+    /// <code>
+    /// Method founded on fixed-point iteration and least squares. 
+    /// Forming matrix conditional equations (A). 
+    /// Forming matrix residual (Y). 
+    /// Calculate transform parameters thought least squares.
+    /// Do accuracy rating.
+    /// </code>
+    /// <remarks>
+    /// Calculation transformation parameters possible with three and more source and destination point.
+    /// </remarks> 
+    /// </summary>
     public sealed class NewtonIterationProcess : AbstractTransformation
     {
         private const int MinListCount = 3;
+        private const double TransformationAccuracy = 1E-15;
 
         /// <summary>
         /// <inheritdoc cref="AbstractTransformation.SourceSystemCoordinates" />
@@ -42,19 +55,14 @@ namespace SCPT.Transformation
         /// </summary>
         public new Vector<double> MeanSquareErrorsMatrix { get; private set; }
 
-        /// <summary>
-        /// is a method for finding successively better approximations to the roots (or zeroes) of a real-valued function. 
-        /// </summary>
-        /// <param name="source">list source coordinates which will be translated to destination coordinates</param>
-        /// <param name="destination">list destination coordinates</param>
-        /// <exception cref="NullReferenceException">throw then source list and destination list reference is null</exception>
-        /// <exception cref="ArgumentException">throw then source list and destination list have different length</exception>
+        /// <inheritdoc />
+        /// <exception cref="ArgumentException">throw then source list and destination list have less then 3 points</exception>
         public NewtonIterationProcess(List<Point> source, List<Point> destination) : base(source, destination)
         {
             if (source.Count <= MinListCount)
-                throw new ArgumentException("source list count cannot be less when 4");
+                throw new ArgumentException("source list count cannot be less when 3");
             if (destination.Count <= MinListCount)
-                throw new ArgumentException("source list count cannot be less when 4");
+                throw new ArgumentException("source list count cannot be less when 3");
 
             SourceSystemCoordinates = source;
             DestinationSystemCoordinates = destination;
@@ -78,6 +86,8 @@ namespace SCPT.Transformation
             M = paramsTransformMatrix[6, 0];
             MeanSquareErrorsMatrix = mceMatrix;
         }
+
+        #region PrivateForming&CalculationMethods
 
         private Matrix<double> FormingCoordinateMatrix(List<Point> list)
         {
@@ -154,7 +164,7 @@ namespace SCPT.Transformation
             for (int i = 0; i < prevPMatrix.RowCount; i++)
                 prevPMatrix[i, 0] = double.MaxValue;
 
-            while (IsSubtractMatrixValuesLessWhenDelta(prevPMatrix, currPMatrix, 0))
+            while (IsSubtractMatrixValuesLessWhenDelta(prevPMatrix, currPMatrix, TransformationAccuracy))
             {
                 prevPMatrix = currPMatrix;
                 // Pi = P(i-1) - ((AT*A)^-1 * AT * Y) *  (A * P(i-1) - Y)
@@ -209,6 +219,8 @@ namespace SCPT.Transformation
             var qDiagonal = qMatrix.GetDiagonal().ToColumnMatrix().SqrtInPlace();
             return Matrix.Multiply(qDiagonal, mCoefficient).ReshapeAsVector();
         }
+
+        #endregion
 
         #region InternalMethodsForTesting
 

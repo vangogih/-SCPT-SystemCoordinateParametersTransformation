@@ -1,12 +1,27 @@
 using System;
 using System.Collections.Generic;
 using Extreme.Mathematics;
+using SCPT.Transformation;
 
 namespace SCPT.Helper
 {
+    /// <summary>
+    /// Abstract class for orderings formations classes with type transformations.
+    /// <example>
+    /// <code>
+    /// For add new transformation type into library tou need: 
+    /// 1. Create class with new type transformation (etc. AffineTransformationSevenParams) 
+    /// 2. Take AbstractTransformation parent new class (new class inherited AbstractTransformation) 
+    /// 3. Inherit constructor and redefine all fields (use key word "new").
+    /// For more understanding look how formations classes:
+    /// </code>
+    /// <seealso cref="NewtonIterationProcess"/>
+    /// <seealso cref="LinearProcedure"/>
+    /// </example>
+    /// </summary>
     public abstract class AbstractTransformation
     {
-     /// <summary>
+        /// <summary>
         /// list X,Y,Z source coordinates in maters dimension.
         /// </summary>
         protected List<Point> SourceSystemCoordinates { get; }
@@ -52,6 +67,10 @@ namespace SCPT.Helper
         /// </summary>
         protected Vector<double> MeanSquareErrorsMatrix { get; private set; }
 
+        /// <param name="srcListCord">list source coordinates which will be translated to destination coordinates</param>
+        /// <param name="destListCord">list destination coordinates</param>
+        /// <exception cref="NullReferenceException">throw then source list and destination list reference is null</exception>
+        /// <exception cref="ArgumentException">throw then source list and destination list have different length</exception>
         protected AbstractTransformation(List<Point> srcListCord, List<Point> destListCord)
         {
             if (srcListCord == null)
