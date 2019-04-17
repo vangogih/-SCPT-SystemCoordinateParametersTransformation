@@ -8,7 +8,7 @@ Algorithms culculate parameters of tranformation:
 
 [Newtonian iterative process (NIP)]: http://dspace.kpfu.ru/xmlui/viewer?file=21592;06_046_A5-000558.pdf&sequence=1&isAllowed=y
 [Linear Procedure (LP)]: http://dspace.kpfu.ru/xmlui/viewer?file=21592;06_046_A5-000558.pdf&sequence=1&isAllowed=y
-[Singular Value Decomposition (SVD)]: https://en.wikipedia.org/wiki/Singular_value_decomposition
+[Singular Value Decomposition (SVD)]: https://arxiv.org/pdf/1806.00627.pdf
 [helmparms3d]: http://helmparms3d.sourceforge.net
 
 [NIP Code]: /SCPT/CalculateParameters/Transformation/NewtonIterationProcess.cs
