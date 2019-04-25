@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Extreme.Mathematics;
+using MathNet.Numerics.LinearAlgebra;
 using SCPT.Transformation;
 
 namespace SCPT.Helper
@@ -17,6 +17,7 @@ namespace SCPT.Helper
     /// </code>
     /// <seealso cref="NewtonIterationProcess"/>
     /// <seealso cref="LinearProcedure"/>
+    /// <seealso cref="SingularValueDecomposition"/>
     /// </example>
     /// </summary>
     public abstract class AbstractTransformation

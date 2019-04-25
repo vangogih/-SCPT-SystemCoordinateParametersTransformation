@@ -1,7 +1,6 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
-using Extreme.Mathematics;
-using Extreme.Mathematics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra;
 using SCPT.Helper;
 
 namespace SCPT.Transformation
@@ -37,14 +36,12 @@ namespace SCPT.Transformation
         /// <inheritdoc cref="AbstractTransformation.RotationMatrix"/>
         /// </summary>
         public new Matrix<double> RotationMatrix { get; private set; }
-
-        // TODO write test field DeltaCoordinateMatrix
+        
         /// <summary>
         /// <inheritdoc cref="AbstractTransformation.DeltaCoordinateMatrix"/>
         /// </summary>
         public new Vector<double> DeltaCoordinateMatrix { get; private set; }
 
-        // TODO write test field M
         /// <summary>
         /// <inheritdoc cref="AbstractTransformation.M"/>
         /// </summary>
@@ -91,7 +88,7 @@ namespace SCPT.Transformation
 
         private Matrix<double> FormingCoordinateMatrix(List<Point> list)
         {
-            var vectorMatrix = Matrix.Create<double>(list.Count, 3); // matrix [nx3]
+            var vectorMatrix = Matrix<double>.Build.Dense(list.Count, 3); // matrix [nx3]
             for (int i = 0; i < list.Count; i++)
             {
                 vectorMatrix[i, 0] = list[i].X;
@@ -104,7 +101,7 @@ namespace SCPT.Transformation
 
         private Matrix<double> FormingAMatrix()
         {
-            var aMatrix = Matrix.Create<double>(SourceSystemCoordinates.Count * 3, 7);
+            var aMatrix = Matrix<double>.Build.Dense(SourceSystemCoordinates.Count * 3, 7);
 
             for (int matrixIndex = 0, listIndex = 0;
                 matrixIndex < SourceSystemCoordinates.Count * 3 || listIndex < SourceSystemCoordinates.Count;
@@ -140,7 +137,7 @@ namespace SCPT.Transformation
 
         private Matrix<double> FormingYMatrix()
         {
-            var yMatrix = Matrix.Create<double>(SourceSystemCoordinates.Count * 3, 1);
+            var yMatrix = Matrix<double>.Build.Dense(SourceSystemCoordinates.Count * 3, 1);
 
             for (int matrixIndex = 0, listIndex = 0;
                 matrixIndex < SourceSystemCoordinates.Count * 3 && listIndex < SourceSystemCoordinates.Count;
@@ -159,8 +156,8 @@ namespace SCPT.Transformation
 
         private Matrix<double> GetMatrixWithTransformParameters(Matrix<double> aMatrix, Matrix<double> yMatrix)
         {
-            var currPMatrix = Matrix.Create<double>(7, 1);
-            var prevPMatrix = Matrix.Create<double>(7, 1);
+            var currPMatrix = Matrix<double>.Build.Dense(7, 1);
+            var prevPMatrix = Matrix<double>.Build.Dense(7, 1);
             for (int i = 0; i < prevPMatrix.RowCount; i++)
                 prevPMatrix[i, 0] = double.MaxValue;
 
@@ -169,10 +166,10 @@ namespace SCPT.Transformation
                 prevPMatrix = currPMatrix;
                 // Pi = P(i-1) - ((AT*A)^-1 * AT * Y) *  (A * P(i-1) - Y)
                 var AT = aMatrix.Transpose();
-                var aInverse = Matrix.Multiply(AT, aMatrix).GetInverse();
-                var dX = Matrix.Subtract(Matrix.Multiply(aMatrix, prevPMatrix), yMatrix);
-                var pMatrix = Matrix.Subtract(prevPMatrix, Matrix.Multiply(Matrix.Multiply(aInverse, AT), dX));
-                currPMatrix = (DenseMatrix<double>) pMatrix;
+                var aInverse = (AT * aMatrix).Inverse();
+                var dX = aMatrix * prevPMatrix - yMatrix;
+                var pMatrix = prevPMatrix - aInverse * AT * dX;
+                currPMatrix = pMatrix;
             }
 
             return currPMatrix;
@@ -181,7 +178,7 @@ namespace SCPT.Transformation
         private bool IsSubtractMatrixValuesLessWhenDelta(Matrix<double> first, Matrix<double> second,
             double delta)
         {
-            var subtract = Matrix.Subtract(first, second);
+            var subtract = first - second;
             for (int i = 0; i < second.RowCount; i++)
                 if (subtract[i, 0] < delta)
                     return false;
@@ -191,17 +188,17 @@ namespace SCPT.Transformation
         private Matrix<double> GetVMatrix(Matrix<double> aMatrix, Matrix<double> yMatrix,
             Matrix<double> vecParamsMatrix)
         {
-            var vMatrix = Matrix.Create<double>(SourceSystemCoordinates.Count * 3, 1);
-            var Ap = Matrix.Multiply(aMatrix, vecParamsMatrix);
+            var vMatrix = Matrix<double>.Build.Dense(SourceSystemCoordinates.Count * 3, 1);
+            var Ap = aMatrix * vecParamsMatrix;
             // V = A * P - Y
-            vMatrix = (DenseMatrix<double>) Matrix.Subtract(Ap, yMatrix);
+            vMatrix = Ap - yMatrix;
 
             return vMatrix;
         }
 
         private double CalculateFCoefficient(Matrix<double> vMatrix)
         {
-            return Matrix.Multiply(vMatrix.Transpose(), vMatrix)[0, 0];
+            return (vMatrix.Transpose() * vMatrix)[0, 0];
         }
 
         private double CalculateMCoefficient(double fCoefficient)
@@ -211,13 +208,14 @@ namespace SCPT.Transformation
 
         private Matrix<double> GetQMatrix(Matrix<double> aMatrix)
         {
-            return Matrix.Multiply(aMatrix.Transpose(), aMatrix).GetInverse();
+            return (aMatrix.Transpose() * aMatrix).Inverse();
         }
 
         private Vector<double> GetMeanSquareErrorsMatrix(Matrix<double> qMatrix, double mCoefficient)
         {
-            var qDiagonal = qMatrix.GetDiagonal().ToColumnMatrix().SqrtInPlace();
-            return Matrix.Multiply(qDiagonal, mCoefficient).ReshapeAsVector();
+            //var qDiagonal = qMatrix.GetDiagonal().ToColumnMatrix().SqrtInPlace();
+            var qDiagonal = qMatrix.Diagonal().PointwiseSqrt();
+            return qDiagonal * mCoefficient;
         }
 
         #endregion

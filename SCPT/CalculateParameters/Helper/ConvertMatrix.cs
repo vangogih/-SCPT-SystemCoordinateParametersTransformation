@@ -1,5 +1,5 @@
 using System;
-using Extreme.Mathematics;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace SCPT.Helper
 {
@@ -11,16 +11,16 @@ namespace SCPT.Helper
     {
         internal static Vector<double> VectorParametersToDeltaCoordinate(Matrix<double> convertMatrix)
         {
-            var result = Matrix.Create<double>(3, 1);
+            var result = Vector<double>.Build.Dense(3, 1);
             var dx = convertMatrix[0, 0];
             var dy = convertMatrix[1, 0];
             var dz = convertMatrix[1, 0];
 
-            result[0, 0] = dx;
-            result[1, 0] = dy;
-            result[2, 0] = dz;
+            result[0] = dx;
+            result[1] = dy;
+            result[2] = dz;
 
-            return result.ReshapeAsVector();
+            return result;
         }
 
         internal static Matrix<double> VectorParametersToRotateMatrix(Matrix<double> convertMatrix)
@@ -65,14 +65,22 @@ namespace SCPT.Helper
             // |-wz*(1+m) 1+m       wx*(1+m) | => |-wz 1  wx|
             // | wy*(1+m) -wx*(1+m) 1+m      |    | wy -wx 1|
 
-            var onePlusM = convertMatrix[0, 0];
-            var wx = convertMatrix[1, 2] / onePlusM;
-            var wy = convertMatrix[2, 0] / onePlusM;
-            var wz = convertMatrix[0, 1] / onePlusM;
-
-            return InitializeRotationMatrix(wx, wy, wz);
+            try
+            {
+                var onePlusM = convertMatrix[0, 0];
+                var wx = convertMatrix[1, 2] / onePlusM;
+                var wy = convertMatrix[2, 0] / onePlusM;
+                var wz = convertMatrix[0, 1] / onePlusM;
+                return InitializeRotationMatrix(wx, wy, wz);
+            }
+            catch (DivideByZeroException e)
+            {
+                // |1 0 0|
+                // |0 1 0|
+                // |0 0 1|
+                return Matrix<double>.Build.DenseDiagonal(3, 3, 1);
+            }
         }
-
 
         private static void CheckCorrectInputMatrix(Matrix<double> matrix)
         {
@@ -89,7 +97,7 @@ namespace SCPT.Helper
             // |1  wz -wy|
             // |-wz 1  wx|
             // | wy -wx 1|
-            var rotationMatrix = Matrix.Create<double>(3, 3);
+            var rotationMatrix = Matrix<double>.Build.Dense(3, 3);
             rotationMatrix[0, 0] = 1;
             rotationMatrix[0, 1] = wz;
             rotationMatrix[0, 2] = -wy;

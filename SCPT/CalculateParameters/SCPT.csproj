@@ -35,13 +35,15 @@
     <DocumentationFile>bin\Release\SCPT.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Extreme.Numerics, Version=7.0.6.0, Culture=neutral, PublicKeyToken=9e513770f58567b2">
-      <HintPath>..\packages\Extreme.Numerics.7.0.6\lib\net46\Extreme.Numerics.dll</HintPath>
+    <Reference Include="MathNet.Numerics, Version=4.7.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\MathNet.Numerics.4.7.0\lib\net40\MathNet.Numerics.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml" />
     <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c">
       <HintPath>..\packages\xunit.abstractions.2.0.3\lib\net35\xunit.abstractions.dll</HintPath>
@@ -67,10 +69,11 @@
     <Compile Include="Helper\Point.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tests\BaseTest.cs" />
-    <Compile Include="Tests\ConvertMatrix\ConvertMatrixTests.cs" />
-    <Compile Include="Tests\LinearProcedure\LinearProcedureTests.cs" />
-    <Compile Include="Tests\NewtonIterationProcess\NewtonIterarionProcessTests.cs" />
-    <Compile Include="Tests\NewtonIterationProcess\PointTests.cs" />
+    <Compile Include="Tests\ConvertMatrix\TestsConvertMatrix.cs" />
+    <Compile Include="Tests\LinearProcedure\TestsLinearProcedure.cs" />
+    <Compile Include="Tests\NewtonIterationProcess\TestsNewtonIterarionProcess.cs" />
+    <Compile Include="Tests\NewtonIterationProcess\TestsPoint.cs" />
+    <Compile Include="Tests\SingularValueDecomposition\TestsSingularValueDecomposition.cs" />
     <Compile Include="Transformation\LinearProcedure.cs" />
     <Compile Include="Transformation\NewtonIterationProcess.cs" />
     <Compile Include="Transformation\SingularValueDecomposition.cs" />
