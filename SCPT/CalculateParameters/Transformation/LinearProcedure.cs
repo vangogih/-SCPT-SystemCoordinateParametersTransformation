@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double;
 using SCPT.Helper;
+using SCPT.Helper.VecParams;
 
 namespace SCPT.Transformation
 {
+    /// <inheritdoc />
     /// <summary>
     /// <code>
     /// Method get transformation parameters thought least squares.
@@ -19,42 +20,28 @@ namespace SCPT.Transformation
     /// </summary>
     public sealed class LinearProcedure : AbstractTransformation
     {
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.SourceSystemCoordinates" />
-        /// </summary>
-        public new List<Point> SourceSystemCoordinates { get; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.DestinationSystemCoordinates"/>
-        /// </summary>
-        public new List<Point> DestinationSystemCoordinates { get; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.RotationMatrix"/>
-        /// </summary>
-        public new Matrix<double> RotationMatrix { get; private set; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.DeltaCoordinateMatrix"/>
-        /// </summary>
-        public new Vector<double> DeltaCoordinateMatrix { get; private set; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.M"/>
-        /// </summary>
-        public new double M { get; private set; }
+        /// <inheritdoc />
+        public override SystemCoordinate SourceSystemCoordinates { get; }
 
         /// <inheritdoc />
-        public LinearProcedure(List<Point> srcListCord, List<Point> destListCord) : base(srcListCord, destListCord)
+        public override SystemCoordinate DestinationSystemCoordinates { get; }
+
+        /// <inheritdoc />
+        public override RotationMatrix RotationMatrix { get; }
+
+        /// <inheritdoc />
+        public override DeltaCoordinateMatrix DeltaCoordinateMatrix { get; }
+
+        /// <inheritdoc />
+        public override double M { get; }
+
+        /// <inheritdoc />
+        public LinearProcedure(SystemCoordinate srcListCord, SystemCoordinate destListCord) : base(srcListCord,
+            destListCord)
         {
             SourceSystemCoordinates = srcListCord;
             DestinationSystemCoordinates = destListCord;
 
-            CalculateTransformationParameters();
-        }
-
-        private void CalculateTransformationParameters()
-        {
             var qMatrix = FormingQMatrix();
             var lxVector = FormingLxVector();
             var lyVector = FormingLyVector();
@@ -62,47 +49,37 @@ namespace SCPT.Transformation
             var dxVector = CalculateDVectors(qMatrix, lxVector);
             var dyVector = CalculateDVectors(qMatrix, lyVector);
             var dzVector = CalculateDVectors(qMatrix, lzVector);
-            var rotationMatrixWithM = FormingRotationMatrixWithM(dxVector, dyVector, dzVector);
-            RotationMatrix = ConvertMatrix.Convert_RotMatrixWithM_To_RotMatrixWithoutM(rotationMatrixWithM);
 
-            DeltaCoordinateMatrix = Vector<double>.Build.Dense(3);
-            DeltaCoordinateMatrix[0] = dxVector[3];
-            DeltaCoordinateMatrix[1] = dyVector[3];
-            DeltaCoordinateMatrix[2] = dzVector[3];
-
-            M = rotationMatrixWithM[0, 0] - 1;
+            IVectorParameters helper = new LPVecParams(dxVector, dyVector, dzVector);
+            RotationMatrix = helper.RotationMatrix;
+            DeltaCoordinateMatrix = helper.DeltaCoordinateMatrix;
+            M = helper.ScaleFactor;
         }
 
         private Matrix<double> FormingQMatrix()
         {
-            var qMatrix = Matrix<double>.Build.Dense(SourceSystemCoordinates.Count, 4);
-            for (int row = 0; row < SourceSystemCoordinates.Count; row++)
-            {
-                qMatrix[row, 0] = SourceSystemCoordinates[row].X;
-                qMatrix[row, 1] = SourceSystemCoordinates[row].Y;
-                qMatrix[row, 2] = SourceSystemCoordinates[row].Z;
-                qMatrix[row, 3] = 1;
-            }
-
+            var qMatrix = Matrix<double>.Build.Dense(SourceSystemCoordinates.List.Count, 4);
+            qMatrix.SetSubMatrix(0, SourceSystemCoordinates.List.Count, 0, 3, SourceSystemCoordinates.Matrix);
+            qMatrix.SetColumn(3, 1);
             return qMatrix;
         }
 
         private Vector<double> FormingLxVector()
         {
-            var lxVector = Vector<double>.Build.Dense(DestinationSystemCoordinates.Count);
+            var lxVector = Vector<double>.Build.Dense(DestinationSystemCoordinates.List.Count);
 
-            for (int row = 0; row < DestinationSystemCoordinates.Count; row++)
-                lxVector[row] = -DestinationSystemCoordinates[row].X;
+            for (int row = 0; row < DestinationSystemCoordinates.List.Count; row++)
+                lxVector[row] = -DestinationSystemCoordinates.List[row].X;
 
             return lxVector;
         }
 
         private Vector<double> FormingLyVector()
         {
-            var lyVector = Vector<double>.Build.Dense(DestinationSystemCoordinates.Count);
+            var lyVector = Vector<double>.Build.Dense(DestinationSystemCoordinates.List.Count);
 
-            for (int row = 0; row < DestinationSystemCoordinates.Count; row++)
-                lyVector[row] = -DestinationSystemCoordinates[row].Y;
+            for (int row = 0; row < DestinationSystemCoordinates.List.Count; row++)
+                lyVector[row] = -DestinationSystemCoordinates.List[row].Y;
 
             return lyVector;
         }
@@ -110,10 +87,10 @@ namespace SCPT.Transformation
 
         private Vector<double> FormingLzVector()
         {
-            var lzVector = Vector<double>.Build.Dense(DestinationSystemCoordinates.Count);
+            var lzVector = Vector<double>.Build.Dense(DestinationSystemCoordinates.List.Count);
 
-            for (int row = 0; row < DestinationSystemCoordinates.Count; row++)
-                lzVector[row] = -DestinationSystemCoordinates[row].Z;
+            for (int row = 0; row < DestinationSystemCoordinates.List.Count; row++)
+                lzVector[row] = -DestinationSystemCoordinates.List[row].Z;
 
             return lzVector;
         }
@@ -121,7 +98,7 @@ namespace SCPT.Transformation
         private Vector<double> CalculateDVectors(Matrix<double> qMatrix, Vector<double> lVector)
         {
             // dVector = -(Q^T*Q)*Q^T*L
-            var dVector = Vector<double>.Build.Dense(4, 1);
+            var dVector = Vector<double>.Build.Dense(4);
 
             var qTranspose = qMatrix.Transpose();
             var qInverse = (qTranspose * qMatrix).Inverse();
@@ -130,25 +107,6 @@ namespace SCPT.Transformation
             return dVector;
         }
 
-        private Matrix<double> FormingRotationMatrixWithM(Vector<double> dxVector, Vector<double> dyVector,
-            Vector<double> dzVector)
-        {
-            var rotMatrix = Matrix<double>.Build.Dense(3, 3);
-
-            rotMatrix[0, 0] = dxVector[0];
-            rotMatrix[0, 1] = dxVector[1];
-            rotMatrix[0, 2] = dxVector[2];
-
-            rotMatrix[1, 0] = dyVector[0];
-            rotMatrix[1, 1] = dyVector[1];
-            rotMatrix[1, 2] = dyVector[2];
-
-            rotMatrix[2, 0] = dzVector[0];
-            rotMatrix[2, 1] = dzVector[1];
-            rotMatrix[2, 2] = dzVector[2];
-
-            return rotMatrix;
-        }
 
         #region InternalMethodsForTests
 
@@ -175,12 +133,6 @@ namespace SCPT.Transformation
         internal Vector<double> CalculateDVectorsTst(Matrix<double> qMatrix, Vector<double> lxVector)
         {
             return CalculateDVectors(qMatrix, lxVector);
-        }
-
-        internal Matrix<double> FormingRotationMatrixTst(Vector<double> dxVector, Vector<double> dyVector,
-            Vector<double> dzVector)
-        {
-            return FormingRotationMatrixWithM(dxVector, dyVector, dzVector);
         }
 
         #endregion

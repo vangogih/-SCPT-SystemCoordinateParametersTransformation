@@ -1,10 +1,13 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Security.AccessControl;
 using MathNet.Numerics.LinearAlgebra;
 using SCPT.Helper;
+using SCPT.Helper.VecParams;
 
 namespace SCPT.Transformation
 {
+    /// <inheritdoc />
     /// <summary>
     /// <code>
     /// Method founded on fixed-point iteration and least squares. 
@@ -22,53 +25,35 @@ namespace SCPT.Transformation
         private const int MinListCount = 3;
         private const double TransformationAccuracy = 1E-15;
 
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.SourceSystemCoordinates" />
-        /// </summary>
-        public new List<Point> SourceSystemCoordinates { get; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.DestinationSystemCoordinates"/>
-        /// </summary>
-        public new List<Point> DestinationSystemCoordinates { get; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.RotationMatrix"/>
-        /// </summary>
-        public new Matrix<double> RotationMatrix { get; private set; }
-        
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.DeltaCoordinateMatrix"/>
-        /// </summary>
-        public new Vector<double> DeltaCoordinateMatrix { get; private set; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.M"/>
-        /// </summary>
-        public new double M { get; private set; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.MeanSquareErrorsMatrix"/>
-        /// </summary>
-        public new Vector<double> MeanSquareErrorsMatrix { get; private set; }
+        /// <inheritdoc />
+        public override SystemCoordinate SourceSystemCoordinates { get; }
 
         /// <inheritdoc />
-        /// <exception cref="ArgumentException">throw then source list and destination list have less then 3 points</exception>
-        public NewtonIterationProcess(List<Point> source, List<Point> destination) : base(source, destination)
+        public override SystemCoordinate DestinationSystemCoordinates { get; }
+
+        /// <inheritdoc />
+        public override RotationMatrix RotationMatrix { get; }
+
+        /// <inheritdoc />
+        public override DeltaCoordinateMatrix DeltaCoordinateMatrix { get; }
+
+        /// <inheritdoc />
+        public override double M { get; }
+
+        /// <inheritdoc cref="AbstractTransformation.MeanSquareErrorsMatrix" />
+        public new Vector<double> MeanSquareErrorsMatrix { get; }
+
+        /// <inheritdoc />
+        public NewtonIterationProcess(SystemCoordinate source, SystemCoordinate destination) : base(source, destination)
         {
-            if (source.Count <= MinListCount)
+            if (source.List.Count <= MinListCount)
                 throw new ArgumentException("source list count cannot be less when 3");
-            if (destination.Count <= MinListCount)
+            if (destination.List.Count <= MinListCount)
                 throw new ArgumentException("source list count cannot be less when 3");
 
             SourceSystemCoordinates = source;
             DestinationSystemCoordinates = destination;
 
-            CalculateTransformationParameters();
-        }
-
-        private void CalculateTransformationParameters()
-        {
             var aMatrix = FormingAMatrix();
             var yMatrix = FormingYMatrix();
             var paramsTransformMatrix = GetMatrixWithTransformParameters(aMatrix, yMatrix);
@@ -78,58 +63,46 @@ namespace SCPT.Transformation
             var qMatrix = GetQMatrix(aMatrix);
             var mceMatrix = GetMeanSquareErrorsMatrix(qMatrix, mCoefficient);
 
-            RotationMatrix = ConvertMatrix.VectorParametersToRotateMatrix(paramsTransformMatrix);
-            DeltaCoordinateMatrix = ConvertMatrix.VectorParametersToDeltaCoordinate(paramsTransformMatrix);
-            M = paramsTransformMatrix[6, 0];
+            IVectorParameters helper = new NIPVecParams(paramsTransformMatrix.Column(0));
+            RotationMatrix = helper.RotationMatrix;
+            DeltaCoordinateMatrix = helper.DeltaCoordinateMatrix;
+            M = helper.ScaleFactor;
             MeanSquareErrorsMatrix = mceMatrix;
         }
 
         #region PrivateForming&CalculationMethods
 
-        private Matrix<double> FormingCoordinateMatrix(List<Point> list)
-        {
-            var vectorMatrix = Matrix<double>.Build.Dense(list.Count, 3); // matrix [nx3]
-            for (int i = 0; i < list.Count; i++)
-            {
-                vectorMatrix[i, 0] = list[i].X;
-                vectorMatrix[i, 1] = list[i].Y;
-                vectorMatrix[i, 2] = list[i].Z;
-            }
-
-            return vectorMatrix;
-        }
-
         private Matrix<double> FormingAMatrix()
         {
-            var aMatrix = Matrix<double>.Build.Dense(SourceSystemCoordinates.Count * 3, 7);
+            var aMatrix = Matrix<double>.Build.Dense(SourceSystemCoordinates.List.Count * 3, 7);
 
             for (int matrixIndex = 0, listIndex = 0;
-                matrixIndex < SourceSystemCoordinates.Count * 3 || listIndex < SourceSystemCoordinates.Count;
+                matrixIndex < SourceSystemCoordinates.List.Count * 3 || listIndex < SourceSystemCoordinates.List.Count;
                 matrixIndex += 3, listIndex++)
             {
                 aMatrix[matrixIndex, 0] = 1;
                 aMatrix[matrixIndex, 1] = 0;
                 aMatrix[matrixIndex, 2] = 0;
                 aMatrix[matrixIndex, 3] = 0;
-                aMatrix[matrixIndex, 4] = -SourceSystemCoordinates[listIndex].Z;
-                aMatrix[matrixIndex, 5] = SourceSystemCoordinates[listIndex].Y;
-                aMatrix[matrixIndex, 6] = SourceSystemCoordinates[listIndex].X;
+                aMatrix[matrixIndex, 4] = -SourceSystemCoordinates.List[listIndex].Z;
+                aMatrix[matrixIndex, 5] = SourceSystemCoordinates.List[listIndex].Y;
+                aMatrix[matrixIndex, 6] = SourceSystemCoordinates.List[listIndex].X;
 
                 aMatrix[matrixIndex + 1, 0] = 0;
                 aMatrix[matrixIndex + 1, 1] = 1;
                 aMatrix[matrixIndex + 1, 2] = 0;
-                aMatrix[matrixIndex + 1, 3] = SourceSystemCoordinates[listIndex].Z;
+                aMatrix[matrixIndex + 1, 3] = SourceSystemCoordinates.List[listIndex].Z;
                 aMatrix[matrixIndex + 1, 4] = 0;
-                aMatrix[matrixIndex + 1, 5] = -SourceSystemCoordinates[listIndex].X;
-                aMatrix[matrixIndex + 1, 6] = SourceSystemCoordinates[listIndex].Y;
+                aMatrix[matrixIndex + 1, 5] = -SourceSystemCoordinates.List[listIndex].X;
+                aMatrix[matrixIndex + 1, 6] = SourceSystemCoordinates.List[listIndex].Y;
 
                 aMatrix[matrixIndex + 2, 0] = 0;
                 aMatrix[matrixIndex + 2, 1] = 0;
                 aMatrix[matrixIndex + 2, 2] = 1;
-                aMatrix[matrixIndex + 2, 3] = -SourceSystemCoordinates[listIndex].Y;
-                aMatrix[matrixIndex + 2, 4] = SourceSystemCoordinates[listIndex].X;
+                aMatrix[matrixIndex + 2, 3] = -SourceSystemCoordinates.List[listIndex].Y;
+                aMatrix[matrixIndex + 2, 4] = SourceSystemCoordinates.List[listIndex].X;
                 aMatrix[matrixIndex + 2, 5] = 0;
-                aMatrix[matrixIndex + 2, 6] = SourceSystemCoordinates[listIndex].Z;
+                aMatrix[matrixIndex + 2, 6] = SourceSystemCoordinates.List[listIndex].Z;
             }
 
             return aMatrix;
@@ -137,18 +110,19 @@ namespace SCPT.Transformation
 
         private Matrix<double> FormingYMatrix()
         {
-            var yMatrix = Matrix<double>.Build.Dense(SourceSystemCoordinates.Count * 3, 1);
+            var yMatrix = Matrix<double>.Build.Dense(SourceSystemCoordinates.List.Count * 3, 1);
 
             for (int matrixIndex = 0, listIndex = 0;
-                matrixIndex < SourceSystemCoordinates.Count * 3 && listIndex < SourceSystemCoordinates.Count;
+                matrixIndex < SourceSystemCoordinates.List.Count * 3 && listIndex < SourceSystemCoordinates.List.Count;
                 matrixIndex += 3, listIndex++)
             {
                 yMatrix[matrixIndex, 0] =
-                    DestinationSystemCoordinates[listIndex].X - SourceSystemCoordinates[listIndex].X;
-                yMatrix[matrixIndex + 1, 0] =
-                    DestinationSystemCoordinates[listIndex].Y - SourceSystemCoordinates[listIndex].Y;
-                yMatrix[matrixIndex + 2, 0] =
-                    DestinationSystemCoordinates[listIndex].Z - SourceSystemCoordinates[listIndex].Z;
+                    DestinationSystemCoordinates.List[listIndex].X -
+                    SourceSystemCoordinates.List[listIndex].X;
+                yMatrix[matrixIndex + 1, 0] = DestinationSystemCoordinates.List[listIndex].Y -
+                                              SourceSystemCoordinates.List[listIndex].Y;
+                yMatrix[matrixIndex + 2, 0] = DestinationSystemCoordinates.List[listIndex].Z -
+                                              SourceSystemCoordinates.List[listIndex].Z;
             }
 
             return yMatrix;
@@ -188,7 +162,7 @@ namespace SCPT.Transformation
         private Matrix<double> GetVMatrix(Matrix<double> aMatrix, Matrix<double> yMatrix,
             Matrix<double> vecParamsMatrix)
         {
-            var vMatrix = Matrix<double>.Build.Dense(SourceSystemCoordinates.Count * 3, 1);
+            var vMatrix = Matrix<double>.Build.Dense(SourceSystemCoordinates.List.Count * 3, 1);
             var Ap = aMatrix * vecParamsMatrix;
             // V = A * P - Y
             vMatrix = Ap - yMatrix;
@@ -203,7 +177,7 @@ namespace SCPT.Transformation
 
         private double CalculateMCoefficient(double fCoefficient)
         {
-            return Math.Sqrt(fCoefficient / (SourceSystemCoordinates.Count * 3 - 7));
+            return Math.Sqrt(fCoefficient / (SourceSystemCoordinates.List.Count * 3 - 7));
         }
 
         private Matrix<double> GetQMatrix(Matrix<double> aMatrix)
@@ -213,7 +187,6 @@ namespace SCPT.Transformation
 
         private Vector<double> GetMeanSquareErrorsMatrix(Matrix<double> qMatrix, double mCoefficient)
         {
-            //var qDiagonal = qMatrix.GetDiagonal().ToColumnMatrix().SqrtInPlace();
             var qDiagonal = qMatrix.Diagonal().PointwiseSqrt();
             return qDiagonal * mCoefficient;
         }
@@ -221,11 +194,6 @@ namespace SCPT.Transformation
         #endregion
 
         #region InternalMethodsForTesting
-
-        internal Matrix<double> FormingCoordinateMatrixTst(List<Point> list)
-        {
-            return FormingCoordinateMatrix(list);
-        }
 
         internal Matrix<double> FormingAMatrixTst()
         {

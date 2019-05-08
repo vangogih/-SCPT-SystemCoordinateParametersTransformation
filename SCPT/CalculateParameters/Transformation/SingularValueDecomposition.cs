@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
@@ -5,16 +6,14 @@ using SCPT.Helper;
 
 namespace SCPT.Transformation
 {
+    /// <inheritdoc />
     /// <summary>
     /// <code>
     /// Obtaining transformation parameters using SVD decomposition.
-    /// 
     /// The basic idea is that the rotation matrix (R) can be obtained by
     /// multiplying the matrices obtained from the decomposition (U * VT).
-    /// 
     /// Next, calculate how much one coordinate system "more"
     /// another by comparing the two systems (trace1/trace2).
-    /// 
     /// Then do the reverse conversion helmert and get dx,dy,dz.
     /// </code>
     /// <remarks>
@@ -24,59 +23,34 @@ namespace SCPT.Transformation
     /// </code>
     /// </remarks>
     /// </summary>
-    internal class SingularValueDecomposition : AbstractTransformation
+    public sealed class SingularValueDecomposition : AbstractTransformation
     {
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.SourceSystemCoordinates"/>
-        /// </summary>
-        public new List<Point> SourceSystemCoordinates { get; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.DestinationSystemCoordinates"/>
-        /// </summary>
-        public new List<Point> DestinationSystemCoordinates { get; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.RotationMatrix"/>
-        /// </summary>
-        public new Matrix<double> RotationMatrix { get; private set; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.DeltaCoordinateMatrix"/>
-        /// </summary>
-        public new Vector<double> DeltaCoordinateMatrix { get; private set; }
-
-        /// <summary>
-        /// <inheritdoc cref="AbstractTransformation.M"/>
-        /// </summary>
-        public new double M { get; private set; }
+        /// <inheritdoc />
+        public override SystemCoordinate SourceSystemCoordinates { get; }
 
         /// <inheritdoc />
-        public SingularValueDecomposition(List<Point> srcListCord, List<Point> destListCord) : base(srcListCord,
+        public override SystemCoordinate DestinationSystemCoordinates { get; }
+
+        /// <inheritdoc />
+        public override RotationMatrix RotationMatrix { get; }
+
+        /// <inheritdoc />
+        public override DeltaCoordinateMatrix DeltaCoordinateMatrix { get; }
+
+        /// <inheritdoc />
+        public override double M { get; }
+
+        /// <inheritdoc />
+        public SingularValueDecomposition(SystemCoordinate srcListCord, SystemCoordinate destListCord) : base(srcListCord,
             destListCord)
         {
             SourceSystemCoordinates = srcListCord;
             DestinationSystemCoordinates = destListCord;
 
-            CalculateTransformationParameters();
-        }
-
-        private void CalculateTransformationParameters()
-        {
-            var countPoints = SourceSystemCoordinates.Count;
-            var srcMatrix = Matrix.Build.Dense(SourceSystemCoordinates.Count, 3);
-            var dstMatrix = Matrix.Build.Dense(DestinationSystemCoordinates.Count, 3);
-            for (int row = 0; row < countPoints; row++)
-            {
-                srcMatrix[row, 0] = SourceSystemCoordinates[row].X;
-                srcMatrix[row, 1] = SourceSystemCoordinates[row].Y;
-                srcMatrix[row, 2] = SourceSystemCoordinates[row].Z;
-
-                dstMatrix[row, 0] = DestinationSystemCoordinates[row].X;
-                dstMatrix[row, 1] = DestinationSystemCoordinates[row].Y;
-                dstMatrix[row, 2] = DestinationSystemCoordinates[row].Z;
-            }
-
+            var countPoints = SourceSystemCoordinates.List.Count;
+            var srcMatrix = SourceSystemCoordinates.Matrix;
+            var dstMatrix = DestinationSystemCoordinates.Matrix;
+            
             var eMatrix = CreateEMatrix();
             var cMatrix = dstMatrix.Transpose() * eMatrix * srcMatrix;
 
@@ -92,16 +66,16 @@ namespace SCPT.Transformation
             var deltaMatrix = (1d / countPoints * (dstMatrix - dMatrixInterim)).Transpose();
             var finalTVector = deltaMatrix.RowSums();
 
-            DeltaCoordinateMatrix = finalTVector;
-            RotationMatrix = rotMatrix.Transpose();
+            DeltaCoordinateMatrix = new DeltaCoordinateMatrix(finalTVector);
+            RotationMatrix = new RotationMatrix(rotMatrix.Transpose(), false);
             M = scale - 1d;
         }
 
         private Matrix<double> CreateEMatrix()
         {
-            var count = SourceSystemCoordinates.Count;
+            var count = SourceSystemCoordinates.List.Count;
             var eMatrix = Matrix<double>.Build.Dense(count, count, -1d / count);
-            var diagonal = Vector.Build.Dense(count, 1d - 1d / count);
+            var diagonal = Vector<double>.Build.Dense(count, 1d - 1d / count);
             eMatrix.SetDiagonal(diagonal);
             return eMatrix;
         }
