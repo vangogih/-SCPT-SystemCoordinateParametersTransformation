@@ -80,6 +80,7 @@
     <Compile Include="Tests\NewtonIterationProcess\TestsPoint.cs" />
     <Compile Include="Tests\NineAffine\TestsNineAffine.cs" />
     <Compile Include="Tests\SingularValueDecomposition\TestsSingularValueDecomposition.cs" />
+    <Compile Include="Transformation\Helmert.cs" />
     <Compile Include="Transformation\LinearProcedure.cs" />
     <Compile Include="Transformation\NewtonIterationProcess.cs" />
     <Compile Include="Transformation\NineAffine.cs" />

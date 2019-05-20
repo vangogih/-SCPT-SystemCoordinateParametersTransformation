@@ -4,6 +4,11 @@ using System.IO;
 using MathNet.Numerics.LinearAlgebra;
 using SCPT.Helper;
 
+/// <summary>
+/// Please, dont use this class.
+/// His create only for algorithm test work.
+/// </summary>
+[Obsolete]
 public abstract class BaseTest
 {
     protected static string PathToTest =

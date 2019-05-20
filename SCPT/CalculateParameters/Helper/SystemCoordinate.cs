@@ -4,12 +4,49 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace SCPT.Helper
 {
+    /// <summary>
+    /// System coordinate on different represent type
+    /// </summary>
     public class SystemCoordinate
     {
+        /// <summary>
+        /// Coordinates represent List type.
+        /// </summary>
         public List<Point> List { get; }
+        
+        /// <summary>
+        /// Coordinates represent Matrix type.
+        /// <example>
+        /// <code>
+        /// |X1 Y1 Z1|
+        /// |X2 Y2 Z2|
+        /// |.  .  . |
+        /// |Xn Yn Zn|
+        /// </code>
+        /// </example>
+        /// </summary>
         public Matrix<double> Matrix { get; private set; }
+        
+        /// <summary>
+        /// Coordinates represent Vector type
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// |X1|
+        /// |Y1|
+        /// |Z1|
+        /// |X2|
+        /// |Y2|
+        /// |Z2|
+        /// |..|
+        /// |Xn|
+        /// |Yn|
+        /// |Zn|
+        /// </code>
+        /// </example>
         public Vector<double> Vector { get; private set; }
 
+        /// <inheritdoc cref="SystemCoordinate"/>
         public SystemCoordinate(List<Point> coordList)
         {
             List = coordList;

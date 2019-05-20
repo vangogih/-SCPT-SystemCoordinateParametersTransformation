@@ -172,7 +172,7 @@ namespace SCPT.Transformation
 
         private double CalculateFCoefficient(Matrix<double> vMatrix)
         {
-            return (vMatrix.Transpose() * vMatrix)[0, 0];
+            return vMatrix.TransposeThisAndMultiply(vMatrix)[0, 0];
         }
 
         private double CalculateMCoefficient(double fCoefficient)
@@ -182,7 +182,7 @@ namespace SCPT.Transformation
 
         private Matrix<double> GetQMatrix(Matrix<double> aMatrix)
         {
-            return (aMatrix.Transpose() * aMatrix).Inverse();
+            return aMatrix.TransposeThisAndMultiply(aMatrix).Inverse();
         }
 
         private Vector<double> GetMeanSquareErrorsMatrix(Matrix<double> qMatrix, double mCoefficient)
