@@ -71,6 +71,7 @@ namespace SCPT.Transformation
             M = scale - 1d;
         }
 
+        // variance-covariance matrix.
         private Matrix<double> CreateEMatrix()
         {
             var count = SourceSystemCoordinates.List.Count;
